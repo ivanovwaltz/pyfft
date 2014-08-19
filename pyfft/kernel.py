@@ -51,7 +51,7 @@ class _FFTKernel:
 		# starting from the maximum available block size, generate and compile kernels
 		# stop when number of registers is less than maximum available for block
 		while max_block_size > self._params.num_smem_banks:
-			max_block_size /= 2
+			max_block_size //= 2
 
 			# Try to generate kernel code. Assertion error means that
 			# given parameters do not allow us to create code;
@@ -102,8 +102,8 @@ class _FFTKernel:
 
 		if self._dir == X_DIRECTION:
 			batch *= self._params.y * self._params.z
-			blocks_num = (batch / xforms_per_block + 1) if batch % xforms_per_block != 0 \
-				else (batch / xforms_per_block)
+			blocks_num = (batch // xforms_per_block + 1) if batch % xforms_per_block != 0 \
+				else (batch // xforms_per_block)
 			blocks_num *= self._blocks_num
 		elif self._dir == Y_DIRECTION:
 			batch *= self._params.z
@@ -112,7 +112,7 @@ class _FFTKernel:
 			blocks_num *= batch
 
 		if blocks_num > self._params.max_grid_x:
-			grid = (self._params.max_grid_x, blocks_num / self._params.max_grid_x)
+			grid = (self._params.max_grid_x, blocks_num // self._params.max_grid_x)
 		else:
 			grid = (blocks_num, 1)
 
@@ -133,20 +133,20 @@ class LocalFFTKernel(_FFTKernel):
 		assert n <= max_block_size * self._params.max_radix, "Signal length is too big for shared mem fft"
 
 		radix_array = getRadixArray(n, 0)
-		if n / radix_array[0] > max_block_size:
+		if n // radix_array[0] > max_block_size:
 			radix_array = getRadixArray(n, self._params.max_radix)
 
 		assert radix_array[0] <= self._params.max_radix, "Max radix choosen is greater than allowed"
-		assert n / radix_array[0] <= max_block_size, \
+		assert n // radix_array[0] <= max_block_size, \
 			"Required number of threads per xform greater than maximum block size for local mem fft"
 
 		self._dir = X_DIRECTION
 		self.in_place_possible = True
 
-		threads_per_xform = n / radix_array[0]
+		threads_per_xform = n // radix_array[0]
 		block_size = 64 if threads_per_xform <= 64 else threads_per_xform
 		assert block_size <= max_block_size
-		xforms_per_block = block_size / threads_per_xform
+		xforms_per_block = block_size // threads_per_xform
 		self._blocks_num = 1
 		self._xforms_per_block = xforms_per_block
 		self._block_size = block_size
@@ -208,14 +208,14 @@ class GlobalFFTKernel(_FFTKernel):
 		batch_size = min(batch_size, stride_in)
 		self._block_size = batch_size * threads_per_xform
 		self._block_size = min(self._block_size, max_block_size)
-		batch_size = self._block_size / threads_per_xform
+		batch_size = self._block_size // threads_per_xform
 		assert radix2 <= radix1
 		assert radix1 * radix2 == radix
 		assert radix1 <= self._params.max_radix
 
-		numIter = radix1 / radix2
+		numIter = radix1 // radix2
 
-		blocks_per_xform = stride_in / batch_size
+		blocks_per_xform = stride_in // batch_size
 		num_blocks = blocks_per_xform
 		if not vertical:
 			num_blocks *= self._horiz_bs
@@ -276,7 +276,7 @@ class GlobalFFTKernel(_FFTKernel):
 			kernel.compile(fft_params.max_block_size)
 			batch_size = kernel.batch_size
 
-			curr_n /= radix_arr[pass_num]
+			curr_n //= radix_arr[pass_num]
 
 			kernels.append(kernel)
 

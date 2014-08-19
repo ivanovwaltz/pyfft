@@ -3,7 +3,7 @@ def log2(n):
 	pos = 0
 	for pow in [16, 8, 4, 2, 1]:
 		if n >= 2 ** pow:
-			n /= (2 ** pow)
+			n //= (2 ** pow)
 			pos += pow
 	return pos
 
@@ -43,14 +43,14 @@ def getRadixArray(n, max_radix):
 		radix_array = []
 		while n > max_radix:
 			radix_array.append(max_radix)
-			n /= max_radix
+			n //= max_radix
 		radix_array.append(n)
 		return radix_array
 
 	if n in [2, 4, 8]:
 		return [n]
 	elif n in [16, 32, 64]:
-		return [8, n / 8]
+		return [8, n // 8]
 	elif n == 128:
 		return [8, 4, 4]
 	elif n == 256:
@@ -92,7 +92,7 @@ def getGlobalRadixInfo(n):
 	numR = 0
 	N = n
 	while N > base_radix:
-		N /= base_radix
+		N //= base_radix
 		numR += 1
 
 	radix = []
@@ -111,10 +111,10 @@ def getGlobalRadixInfo(n):
 			R2.append(1)
 		else:
 			r1 = 2
-			r2 = B / r1
+			r2 = B // r1
 			while r2 > r1:
 				r1 *= 2
-				r2 = B / r1
+				r2 = B // r1
 
 			R1.append(r1)
 			R2.append(r2)
@@ -126,10 +126,10 @@ def getPadding(threads_per_xform, Nprev, threads_req, xforms_per_block, Nr, num_
 	if threads_per_xform <= Nprev or Nprev >= num_banks:
 		offset = 0
 	else:
-		numRowsReq = (threads_per_xform if threads_per_xform < num_banks else num_banks) / Nprev
+		numRowsReq = (threads_per_xform if threads_per_xform < num_banks else num_banks) // Nprev
 		numColsReq = 1
 		if numRowsReq > Nr:
-			numColsReq = numRowsReq / Nr
+			numColsReq = numRowsReq // Nr
 		numColsReq = Nprev * numColsReq
 		offset = numColsReq
 
@@ -159,8 +159,8 @@ def getSharedMemorySize(n, radix_array, threads_per_xform, xforms_per_block, num
 	numRadix = len(radix_array)
 	for r in range(numRadix):
 
-		numIter = radix_array[0] / radix_array[r]
-		threads_req = n / radix_array[r]
+		numIter = radix_array[0] // radix_array[r]
+		threads_req = n // radix_array[r]
 		Ncurr = Nprev * radix_array[r]
 
 		if r < numRadix - 1:
@@ -168,6 +168,6 @@ def getSharedMemorySize(n, radix_array, threads_per_xform, xforms_per_block, num
 				radix_array[r], num_local_mem_banks)
 			smem_size = max(smem_size, smem_size_new)
 			Nprev = Ncurr
-			len_ = len_ / radix_array[r]
+			len_ = len_ // radix_array[r]
 
 	return smem_size

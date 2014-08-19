@@ -143,13 +143,13 @@ class FFTPlan:
 					self._params.x, 1, X_DIRECTION, 1))
 			elif self._params.x > 1:
 				radix_array = getRadixArray(self._params.x, 0)
-				if self._params.x / radix_array[0] <= self._params.max_block_size:
+				if self._params.x // radix_array[0] <= self._params.max_block_size:
 					kernel = LocalFFTKernel(self._params, self._params.x)
 					kernel.compile(self._params.max_block_size)
 					kernels.append(kernel)
 				else:
 					radix_array = getRadixArray(self._params.x, self._params.max_radix)
-					if self._params.x / radix_array[0] <= self._params.max_block_size:
+					if self._params.x // radix_array[0] <= self._params.max_block_size:
 						kernel = LocalFFTKernel(self._params, self._params.x)
 						kernel.compile(self._params.max_block_size)
 						kernels.append(kernel)
